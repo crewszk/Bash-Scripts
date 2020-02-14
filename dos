@@ -1,0 +1,77 @@
+#!/bin/bash
+
+while :
+do
+	#Resetting all data values to nothing
+	commandIn=''
+	arg1=''
+	arg2=''
+	arg3=''
+	parse=''
+
+	#Get the user's command while showing my name and the working directory followed by a '>' symbol
+	read -p 'zackery '$(pwd)'> ' commandIn
+
+	#Place the input in a format where I'm able to manipulate the strings hassle free
+	parse=( $commandIn )
+	arg1=${parse[1]}
+	arg2=${parse[2]}
+	#I added a third argument for certain commands to support options on all commands that allow options
+	arg3=${parse[3]}
+
+	#The case statement allowing for multiple commands, it first looks at the first string in input as that is the 
+	#position for the command, and then depending on the command will interpret it as its linux equivalent
+	#it also converts the command to uppercase so it's case-insensitive
+	case ${parse[0]^^} in
+		#allows options
+		'CHDIR')
+			cd ${arg1} ${arg2};;
+		'CLS')
+			clear;;
+		#allows options
+		'COPY')
+			cp ${arg1} ${arg2} ${arg3};;
+		#allows options
+		'CREATEDIR')
+			mkdir ${arg1} ${arg2};;
+		#allows options with 2 files created at once, or only 3 files created at once with no options
+		'CREATEFILE')
+			touch ${arg1} ${arg2} ${arg3};;
+		#allows options
+		'DELETE')
+			rm ${arg1} ${arg2};;
+		#allows options as well as specific destination arguments
+		'DIR')
+			ls ${arg1} ${arg2};;
+		#allows options
+		'MOVE')
+			mv ${arg1} ${arg2} ${arg3};;
+		#allows options while also printing the entire string if no options are present
+		'PRINT')
+			echo ${arg1} ${commandIn:$(( $(expr length ${parse[0]}) + $(expr length ${arg1}) + 1 ))};;
+		#allows options
+		'RENAME')
+			mv ${arg1} ${arg2};;
+		#allows options and reading of 2 files, or 3 files if no options
+		'TYPE')
+			cat ${arg1} ${arg2} ${arg3};;
+		'QUIT')
+			break;;
+		'HELP')
+			echo 'CHDIR [option] [directory] : Changes working directory'
+			echo 'CLS : Clears the terminal'
+			echo 'COPY [option] [source] [destination] : Copies a file'
+			echo 'CREATEDIR [option] [directory] : Creates a directory in the working directory'
+			echo 'CREATEFILE [option | file1] [file2] [file3] : Creates a blank file, up to 2 can be created at once with options or 3 files without options'
+			echo 'DELETE [option] [file] : Deletes a file'
+			echo 'DIR [option] [directory] : Lists all files and directories in the working directory, or in a specified one'
+			echo 'MOVE [option] [source] [destination] : Moves a file from one location to another'
+			echo 'PRINT [option] [string] : Prints a specified string to the terminal'
+			echo 'RENAME [option] [source] [destination] : Renames a file'
+			echo 'TYPE [option | file1] [file2] [file3] : Prints the contents of up to 2 files with options, or 3 files without options'
+			echo 'QUIT : Quits out of DOS'
+			echo 'HELP : Prints the help screen for all the commands';;
+		*)
+			echo The command ${commandIn} does not exist!
+	esac
+done
