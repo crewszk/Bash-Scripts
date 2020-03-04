@@ -1,0 +1,30 @@
+#!/bin/bash
+
+filepath=$1
+
+if [ -f "$filepath" ];
+then
+        #initialize the total amount of elements
+        total=$(wc -l $filepath | cut -d " " -f 1)
+
+        #Header for table
+        echo
+        echo "Total Species: $total"
+        echo
+        echo "Species Information:"
+        echo
+        echo -e 'Name\t\tCount\t  Minimum\tMaximum\t\tAverage'
+        echo -e '--------\t-----\t  ---------\t---------\t---------'
+
+        #Parsing files contents for easier table creation
+        for items in  $(cat $filepath | cut -b -10 | sort -u | uniq -i); do
+                printf "%-10s\t%5d\t  " "$items" "$(grep -c "$items" $filepath)"
+                printf "%9.6f\t" "$(cat $filepath | grep "$items" | cut -b 10- | numbound -l)"
+                printf "%9.6f\t" "$(cat $filepath | grep "$items" | cut -b 10- | numbound)"
+                printf "%9.6f\t" "$(cat $filepath | grep "$items" | cut -b 10- | numaverage)"
+                echo
+        done
+        echo
+else
+        echo "$filepath does not exist"
+fi
