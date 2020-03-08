@@ -1,0 +1,163 @@
+#!/bin/bash
+
+usage() {
+    echo -e "\nUsage: windchill --airtemp=<temp> --velocity=<speed> [-c | --cout] [-h | --help] [-q | --quiet] [-v | --version]"
+}
+try() {
+    echo -e "Try 'windchill --help' for more information\n"
+}
+
+OPT=$(getopt -o -c::h::q::v:: --longoptions cout::,help::,quiet::,version::,airtemp:,velocity: -- "$@")
+eval set -- "$OPT"
+
+airtemp=''
+velocity=''
+windchill=''
+temp='F'
+c=0
+q=0
+h=0
+v=0
+
+if [ $? -ne 0 ];
+then
+    echo "Illegal Argument(s)"
+    usage
+    exit 1
+fi
+
+while true ;
+do
+case "$1" in
+
+    -c|--cout)
+        if [ $c -eq 0 ] && [ $h -eq 0 ] && [ $v -eq 0 ] ; then
+            c=1
+            temp='C'
+        else
+            echo -e "\nInvalid Arguements"
+            usage
+            try
+            exit 2
+        fi
+        shift 2;;
+
+    -h|--help)
+        if [ $h -eq 0 ] && [ $c -eq 0 ] && [ $q -eq 0 ] && [ -z $airtemp ] && [ -z $velocity ] ; then
+            h=1
+            break
+        else
+            echo -e "\nInvalid Arguments"
+            usage
+            try
+            exit 2
+        fi;;
+
+    -q|--quiet)
+        if [ $q -eq 0 ] && [ $h -eq 0 ] && [ $v -eq 0 ] ; then
+            q=1
+        else
+            echo -e "\nInvalid Arguments"
+            usage
+            try
+            exit 2
+        fi
+        shift 2;;
+
+    -v|--version)
+        if [ $v -eq 0 ] && [ $c -eq 0 ] && [ $q -eq 0 ] && [ -z $airtemp ] && [ -z $velocity ] ; then
+            v=1
+            break
+        else
+            echo -e "\nInvalid Arguments"
+            usage
+            try
+            exit 2
+        fi;;
+
+    --airtemp)
+        if [ -z $airtemp ] ; then
+            airtemp=$2
+        else
+            echo -e "\nInvalid Arguments"
+            usage
+            try
+            exit 2
+        fi
+        shift 2;;
+
+    --velocity)
+        if [ -z $velocity ] ; then
+            velocity=$2
+        else
+            echo -e "\nInvalid Arguments"
+            usage
+            try
+            exit 2
+        fi
+        shift 2;;
+    --)
+        shift
+        break;;
+    *)
+        echo "UNKNOWN INTERNAL ERROR - VALUE IS $1"
+        exit 1;;
+esac
+done
+
+if [ $q -eq 0 ] ; then
+    echo -e "\nWind-Chill Calculator\n"
+fi
+
+if [ $h -ne 0 ] ; then
+    usage
+    echo -e "\nArguments"
+    printf "%-20s%-s\n" "--airtemp=<temp>" "The outside air temperature (in Fahrenheit by default)"
+    printf "%-20s%-s\n" "--velocity=<temp>" "The wind speed"
+    printf "%-20s%-s\n" "-c | --cout" "Display the wind-chill value in Celsius rather than Fehrenheit"
+    printf "%-20s%-s\n" "-h | --help" "Display this message"
+    printf "%-20s%-s\n" "-q | --quiet" "Do not display anything except the answer in the output"
+    printf "%-20s%-s\n\n" "-v | --version" "Display the version information"
+    exit 0
+elif [ $v -ne 0 ] ; then
+    echo "Version: 1.0"
+    echo "Author: Zackery Crews"
+    echo "Date: March 7, 2020"
+    echo -e "Copyright (C) 2020 by InfoTek Industries, LLC\n"
+    exit 0
+elif [ -z $velocity ] && [ -z $airtemp ] ; then
+    echo -e "\nMissing Wind Speed and Outside Air Temperature Arguments"
+    usage
+    try
+    exit 3
+elif [ -n $velocity ] && [ -z $airtemp ] ; then
+    echo -e "\nMissing Outside Air Temperature Argument"
+    usage
+    try
+    exit 3
+elif [ -z $velocity ] && [ -n $airtemp ] ; then
+    echo -e "\nMissing Wind Speed Argument"
+    usage
+    try
+    exit 3
+elif [ $airtemp -lt -58 ] || [ $airtemp -gt 41 ] ; then
+    echo -e "Outside Air Temperature ($airtemp) is Out of Range [-58 to 41]\n"
+    exit 4
+elif [ $velocity -lt 2 ] || [ $velocity -gt 50 ] ; then
+    echo -e "Wind Speed ($velocity) is Out of Range [2 to 50]\n"
+    exit 4
+else
+    vel=`echo "e( 0.16 * l( $velocity ))" | bc -l`
+    windchill=`echo "35.74 + ( 0.6215 * $airtemp ) - ( 35.75 * $vel ) + ( 0.4275 * $airtemp * $vel )" | bc -l`
+
+    if [ $c -ne 0 ]; then
+        windchill=`echo "( $windchill - 32 ) * ( 5 / 9 )" | bc -l`
+    fi
+    if [ $q -ne 0 ]; then
+        printf "\n%.3f\n\n" "$windchill"
+    else
+        echo "Outside Air Temperature: $airtemp"
+        echo "Wind Speed: $velocity"
+        printf "%s (%s): %.3f\n" "Wind-Chill" "$temp" "$windchill"
+    fi
+fi
